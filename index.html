@@ -19,26 +19,30 @@
       -webkit-tap-highlight-color: transparent;
     }
 
-    body, html {
+    /* webkit-fill-available forces iOS PWA viewports to stretch to true physical limits */
+    html, body {
       width: 100%;
-      height: 100dvh; /* Dynamic viewport height prevents PWA scaling bugs */
+      height: 100%;
+      height: -webkit-fill-available;
       background-color: #0b0b0b;
       color: #ffffff;
       font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Icons", "Helvetica Neue", Helvetica, Arial, sans-serif;
       overflow: hidden;
     }
 
-    /* Fixed position container binds directly to physical screen edges */
+    /* Fixed positioning bound to webkit-fill-available resolves the Home Screen toolbar gap */
     .app-container {
-      position: fixed;
+      position: absolute;
       top: 0;
       left: 0;
       right: 0;
       bottom: 0;
+      height: 100%;
+      height: -webkit-fill-available;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      padding: calc(15px + env(safe-area-inset-top)) 24px calc(12px + env(safe-area-inset-bottom)) 24px;
+      padding: calc(15px + env(safe-area-inset-top)) 24px calc(10px + env(safe-area-inset-bottom)) 24px;
     }
 
     header {
@@ -60,7 +64,7 @@
       flex-direction: column;
       align-items: center;
       width: 100%;
-      flex: 1; /* Safari Flexbox compliance */
+      flex: 1; /* Complies with Safari flex constraints */
       min-height: 0;
     }
 
@@ -77,7 +81,7 @@
       padding-top: 15px;
     }
 
-    /* Welcome/Permission Screen styling */
+    /* Permission/Splash Screen */
     .permission-illustration {
       width: 80px;
       height: 80px;
@@ -142,7 +146,7 @@
       letter-spacing: 0.05em;
     }
 
-    /* Dashboard Gauge (Slightly more compact to allow room for the wavelength chart) */
+    /* Dashboard Gauge */
     .gauge-container {
       position: relative;
       width: 200px;
@@ -196,7 +200,7 @@
       margin-top: 4px;
     }
 
-    /* Premium Wavelength Timeline Chart Container */
+    /* Wavelength Timeline Chart Container */
     .timeline-container {
       width: 100%;
       max-width: 340px;
@@ -350,11 +354,11 @@
                 <stop offset="100%" stop-color="#ffffff" stop-opacity="0.0" />
               </linearGradient>
             </defs>
-            <!-- Render paths dynamically in JS -->
+            <!-- Paths and texts are dynamically rendered via Javascript -->
           </svg>
         </div>
         <div class="timeline-labels" id="timeline-labels">
-          <!-- Render labels dynamically in JS -->
+          <!-- Labels are dynamically rendered via Javascript -->
         </div>
       </div>
 
@@ -416,7 +420,6 @@
       const lon = position.coords.longitude;
       
       try {
-        // Query API including past_days=1 to guarantee we can look backwards in time smoothly
         const response = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=uv_index&daily=uv_index_max&timezone=auto&past_days=1&forecast_days=2`);
         
         if (!response.ok) throw new Error("API response error");
@@ -445,13 +448,12 @@
       const hourlyTimes = data.hourly.time;
       const hourlyUV = data.hourly.uv_index;
       
-      // Get local daily max (today is index 1 because index 0 is yesterday due to past_days=1)
+      // Get local daily max (index 1 is today because index 0 is yesterday due to past_days=1)
       const dailyPeak = data.daily.uv_index_max[1]; 
       
       const currentFormattedTime = getFormattedLocalHour();
       const timeIndex = hourlyTimes.indexOf(currentFormattedTime);
       
-      // Get current UV
       const currentUV = timeIndex !== -1 ? hourlyUV[timeIndex] : 0;
 
       document.getElementById('uv-num').innerText = currentUV.toFixed(1);
@@ -477,7 +479,6 @@
       document.getElementById('uv-text').innerText = category;
       document.getElementById('uv-advice').innerText = advice;
 
-      // Update progress ring
       const progressRing = document.getElementById('progress-ring');
       const circumference = 628; 
       const maxScaleVal = 12;
@@ -497,13 +498,13 @@
       const sparkline = document.getElementById('sparkline');
       const labelContainer = document.getElementById('timeline-labels');
       
-      // Clear previous paths/labels
-      sparkline.querySelectorAll('path, circle').forEach(el => el.remove());
+      // Clear previous paths, circles and text
+      sparkline.querySelectorAll('path, circle, text').forEach(el => el.remove());
       labelContainer.innerHTML = '';
 
       const chartWidth = 300;
       const chartHeight = 75;
-      const padY = 15;
+      const padY = 20; // Increased padding to prevent UV numbers from clipping at top of graph
       const usableHeight = chartHeight - padY * 2;
 
       const points = [];
@@ -515,12 +516,12 @@
         if (targetIndex >= 0 && targetIndex < times.length) {
           const uv = uvIndices[targetIndex];
           const timeStr = times[targetIndex];
-          const hour = parseInt(timeStr.split('T')[1].split(':')[0]);
-          const ampm = hour >= 12 ? 'p' : 'a';
-          const displayHour = hour % 12 === 0 ? 12 : hour % 12;
+          
+          // Formats directly to 24-hour style e.g., "15:00"
+          const hourFormatted = timeStr.split('T')[1].substring(0, 5); 
           
           points.push({ uv, active: i === 0 });
-          labels.push({ text: i === 0 ? "Now" : `${displayHour}${ampm}`, active: i === 0 });
+          labels.push({ text: hourFormatted, active: i === 0 });
         }
       }
 
@@ -567,7 +568,20 @@
       lineEl.setAttribute("fill", "none");
       sparkline.appendChild(lineEl);
 
-      // 3. Render active/glowing circle at "Now" point
+      // 3. Render UV values above each node on the wavelength
+      coords.forEach((c, idx) => {
+        const textVal = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        textVal.setAttribute("x", c.x);
+        textVal.setAttribute("y", c.y - 10); // Offset above line
+        textVal.setAttribute("fill", c.active ? "#ffffff" : "rgba(255, 255, 255, 0.4)");
+        textVal.setAttribute("font-size", "8");
+        textVal.setAttribute("font-weight", c.active ? "bold" : "normal");
+        textVal.setAttribute("text-anchor", "middle");
+        textVal.textContent = points[idx].uv.toFixed(1);
+        sparkline.appendChild(textVal);
+      });
+
+      // 4. Render active/glowing circle at "Now" point
       const activeNode = coords.find(c => c.active);
       if (activeNode) {
         // Outer glow circle
@@ -587,7 +601,7 @@
         sparkline.appendChild(innerCircle);
       }
 
-      // Render corresponding timeline text labels
+      // Render corresponding timeline text labels (00:00 style)
       labels.forEach(l => {
         const span = document.createElement('span');
         span.className = `timeline-label ${l.active ? 'active' : ''}`;
