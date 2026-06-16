@@ -19,39 +19,34 @@
       -webkit-tap-highlight-color: transparent;
     }
 
-    /* webkit-fill-available forces iOS PWA viewports to stretch to true physical limits */
+    /* 100dvh forces iOS stand-alone PWAs to stretch perfectly to hardware margins */
     html, body {
       width: 100%;
-      height: 100%;
-      height: -webkit-fill-available;
+      height: 100vh;
+      height: 100dvh;
       background-color: #0b0b0b;
       color: #ffffff;
       font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Icons", "Helvetica Neue", Helvetica, Arial, sans-serif;
       overflow: hidden;
     }
 
-    /* Fixed positioning bound to webkit-fill-available resolves the Home Screen toolbar gap */
     .app-container {
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      height: 100%;
-      height: -webkit-fill-available;
+      width: 100%;
+      height: 100vh;
+      height: 100dvh;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      padding: calc(15px + env(safe-area-inset-top)) 24px calc(10px + env(safe-area-inset-bottom)) 24px;
+      padding: calc(10px + env(safe-area-inset-top)) 24px calc(10px + env(safe-area-inset-bottom)) 24px;
     }
 
     header {
       text-align: center;
-      margin-top: 10px;
+      margin-top: 5px;
     }
 
     header h1 {
-      font-size: 0.85rem;
+      font-size: 0.8rem;
       font-weight: 600;
       letter-spacing: 0.3em;
       text-transform: uppercase;
@@ -64,7 +59,7 @@
       flex-direction: column;
       align-items: center;
       width: 100%;
-      flex: 1; /* Complies with Safari flex constraints */
+      flex: 1; /* Safari Flexbox compliance */
       min-height: 0;
     }
 
@@ -78,7 +73,8 @@
 
     #dashboard-screen {
       justify-content: space-between;
-      padding-top: 15px;
+      padding-top: 10px;
+      height: 100%;
     }
 
     /* Permission/Splash Screen */
@@ -146,11 +142,11 @@
       letter-spacing: 0.05em;
     }
 
-    /* Dashboard Gauge */
+    /* Dashboard Gauge (Tuned down slightly for multi-graph spacing) */
     .gauge-container {
       position: relative;
-      width: 200px;
-      height: 200px;
+      width: 170px;
+      height: 170px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -187,34 +183,34 @@
     }
 
     .uv-value {
-      font-size: 4.2rem;
+      font-size: 3.5rem;
       font-weight: 200;
       line-height: 1;
     }
 
     .uv-label {
-      font-size: 0.8rem;
+      font-size: 0.75rem;
       font-weight: 500;
       text-transform: uppercase;
       letter-spacing: 0.15em;
       margin-top: 4px;
     }
 
-    /* Wavelength Timeline Chart Container */
+    /* Premium Wavelength Timeline Chart Container (Compacted) */
     .timeline-container {
       width: 100%;
       max-width: 340px;
       background-color: #121214;
       border: 1px solid #1c1c1e;
-      border-radius: 20px;
-      padding: 16px;
+      border-radius: 16px;
+      padding: 10px 14px;
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 6px;
     }
 
     .timeline-title {
-      font-size: 0.7rem;
+      font-size: 0.65rem;
       font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 0.1em;
@@ -224,7 +220,7 @@
     .timeline-chart-wrapper {
       position: relative;
       width: 100%;
-      height: 75px;
+      height: 60px; /* Highly optimized card heights */
     }
 
     .timeline-svg {
@@ -240,7 +236,7 @@
     }
 
     .timeline-label {
-      font-size: 0.65rem;
+      font-size: 0.6rem;
       color: #8e8e93;
       text-align: center;
       width: calc(100% / 7);
@@ -263,22 +259,22 @@
     .card {
       background-color: #121214;
       border: 1px solid #1c1c1e;
-      padding: 14px 16px;
-      border-radius: 16px;
+      padding: 10px 12px;
+      border-radius: 14px;
       display: flex;
       flex-direction: column;
     }
 
     .card-title {
-      font-size: 0.7rem;
+      font-size: 0.65rem;
       text-transform: uppercase;
       letter-spacing: 0.08em;
       color: #8e8e93;
-      margin-bottom: 4px;
+      margin-bottom: 2px;
     }
 
     .card-value {
-      font-size: 1.15rem;
+      font-size: 1.05rem;
       font-weight: 500;
     }
 
@@ -292,10 +288,10 @@
       background: none;
       border: none;
       color: #8e8e93;
-      font-size: 0.8rem;
+      font-size: 0.75rem;
       letter-spacing: 0.05em;
       text-transform: uppercase;
-      padding: 8px;
+      padding: 6px;
       cursor: pointer;
     }
   </style>
@@ -343,23 +339,29 @@
         </div>
       </div>
 
-      <!-- Wavelength Trend Timeline Chart -->
+      <!-- UV Timeline Chart -->
       <div class="timeline-container">
-        <span class="timeline-title">Wavelength (7-Hour Forecast)</span>
+        <span class="timeline-title">UV Index (7-Hour Forecast)</span>
         <div class="timeline-chart-wrapper">
-          <svg class="timeline-svg" id="sparkline" viewBox="0 0 300 75" preserveAspectRatio="none">
+          <svg class="timeline-svg" id="uv-sparkline" viewBox="0 0 300 60" preserveAspectRatio="none">
             <defs>
               <linearGradient id="area-grad" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="0%" stop-color="#ffffff" stop-opacity="0.18" />
                 <stop offset="100%" stop-color="#ffffff" stop-opacity="0.0" />
               </linearGradient>
             </defs>
-            <!-- Paths and texts are dynamically rendered via Javascript -->
           </svg>
         </div>
-        <div class="timeline-labels" id="timeline-labels">
-          <!-- Labels are dynamically rendered via Javascript -->
+        <div class="timeline-labels" id="uv-timeline-labels"></div>
+      </div>
+
+      <!-- Temperature Timeline Chart -->
+      <div class="timeline-container">
+        <span class="timeline-title">Temperature (7-Hour Forecast)</span>
+        <div class="timeline-chart-wrapper">
+          <svg class="timeline-svg" id="temp-sparkline" viewBox="0 0 300 60" preserveAspectRatio="none"></svg>
         </div>
+        <div class="timeline-labels" id="temp-timeline-labels"></div>
       </div>
 
       <!-- Contextual detail cards -->
@@ -420,7 +422,8 @@
       const lon = position.coords.longitude;
       
       try {
-        const response = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=uv_index&daily=uv_index_max&timezone=auto&past_days=1&forecast_days=2`);
+        // Query API requesting both uv_index and temperature_2m
+        const response = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=uv_index,temperature_2m&daily=uv_index_max&timezone=auto&past_days=1&forecast_days=2`);
         
         if (!response.ok) throw new Error("API response error");
         
@@ -447,8 +450,8 @@
     function renderUVData(data) {
       const hourlyTimes = data.hourly.time;
       const hourlyUV = data.hourly.uv_index;
+      const hourlyTemp = data.hourly.temperature_2m;
       
-      // Get local daily max (index 1 is today because index 0 is yesterday due to past_days=1)
       const dailyPeak = data.daily.uv_index_max[1]; 
       
       const currentFormattedTime = getFormattedLocalHour();
@@ -487,24 +490,25 @@
       
       progressRing.style.strokeDashoffset = offset;
 
-      // Build Wavelength Timeline Sparkline
-      renderWavelengthChart(hourlyTimes, hourlyUV, timeIndex);
+      // Build Wavelength Timeline Sparklines dynamically
+      renderSparkline('uv-sparkline', 'uv-timeline-labels', hourlyTimes, hourlyUV, timeIndex, false);
+      renderSparkline('temp-sparkline', 'temp-timeline-labels', hourlyTimes, hourlyTemp, timeIndex, true);
 
       showScreen('dashboard-screen');
     }
 
-    // Render smooth SVG Hermite Bezier wave for timeline
-    function renderWavelengthChart(times, uvIndices, currentIndex) {
-      const sparkline = document.getElementById('sparkline');
-      const labelContainer = document.getElementById('timeline-labels');
+    // Generic, highly responsive Sparkline renderer (Supports dynamic Y-scaling for Temp)
+    function renderSparkline(svgId, labelContainerId, times, values, currentIndex, isTemp = false) {
+      const sparkline = document.getElementById(svgId);
+      const labelContainer = document.getElementById(labelContainerId);
       
       // Clear previous paths, circles and text
       sparkline.querySelectorAll('path, circle, text').forEach(el => el.remove());
       labelContainer.innerHTML = '';
 
       const chartWidth = 300;
-      const chartHeight = 75;
-      const padY = 20; // Increased padding to prevent UV numbers from clipping at top of graph
+      const chartHeight = 60;
+      const padY = 16; // Ensures text labels above nodes never clip
       const usableHeight = chartHeight - padY * 2;
 
       const points = [];
@@ -514,26 +518,36 @@
       for (let i = -3; i <= 3; i++) {
         const targetIndex = currentIndex + i;
         if (targetIndex >= 0 && targetIndex < times.length) {
-          const uv = uvIndices[targetIndex];
+          const val = values[targetIndex];
           const timeStr = times[targetIndex];
+          const hourFormatted = timeStr.split('T')[1].substring(0, 5); // Forces "HH:00" 24h format
           
-          // Formats directly to 24-hour style e.g., "15:00"
-          const hourFormatted = timeStr.split('T')[1].substring(0, 5); 
-          
-          points.push({ uv, active: i === 0 });
+          points.push({ val, active: i === 0 });
           labels.push({ text: hourFormatted, active: i === 0 });
         }
       }
 
-      // Map mathematical values to raw SVG coordinates
+      // Establish absolute dynamic scaling thresholds
+      let minVal = 0;
+      let maxVal = 12; // Static limit for UV scale
+      
+      if (isTemp) {
+        const numericValues = points.map(p => p.val);
+        // Dynamic padding wraps around temperature extremes (prevents flat horizontal lines)
+        minVal = Math.min(...numericValues) - 1.5;
+        maxVal = Math.max(...numericValues) + 1.5;
+      }
+
+      const range = maxVal - minVal || 1;
+
+      // Map values to coordinates
       const coords = points.map((p, idx) => {
         const x = (idx / (points.length - 1)) * chartWidth;
-        // Map UV 0-12 scale linearly to vertical space
-        const y = chartHeight - padY - (Math.min(p.uv, 12) / 12) * usableHeight;
-        return { x, y, active: p.active };
+        const y = chartHeight - padY - ((p.val - minVal) / range) * usableHeight;
+        return { x, y, active: p.active, val: p.val };
       });
 
-      // Build smooth cubic Hermite Bezier interpolation path
+      // Build smooth Hermite Spline path
       let linePath = `M ${coords[0].x} ${coords[0].y} `;
       let areaPath = `M ${coords[0].x} ${chartHeight} L ${coords[0].x} ${coords[0].y} `;
 
@@ -541,7 +555,6 @@
         const p0 = coords[i];
         const p1 = coords[i + 1];
         
-        // Control points smooth horizontal tension
         const cpX1 = p0.x + (p1.x - p0.x) / 2;
         const cpY1 = p0.y;
         const cpX2 = p0.x + (p1.x - p0.x) / 2;
@@ -554,13 +567,13 @@
 
       areaPath += `L ${chartWidth} ${chartHeight} Z`;
 
-      // 1. Create filled area path
+      // 1. Render gradient area fill
       const areaEl = document.createElementNS("http://www.w3.org/2000/svg", "path");
       areaEl.setAttribute("d", areaPath);
       areaEl.setAttribute("fill", "url(#area-grad)");
       sparkline.appendChild(areaEl);
 
-      // 2. Create stroke line path
+      // 2. Render stroke line
       const lineEl = document.createElementNS("http://www.w3.org/2000/svg", "path");
       lineEl.setAttribute("d", linePath);
       lineEl.setAttribute("stroke", "rgba(255, 255, 255, 0.45)");
@@ -568,23 +581,22 @@
       lineEl.setAttribute("fill", "none");
       sparkline.appendChild(lineEl);
 
-      // 3. Render UV values above each node on the wavelength
+      // 3. Render raw numbers above each node
       coords.forEach((c, idx) => {
         const textVal = document.createElementNS("http://www.w3.org/2000/svg", "text");
         textVal.setAttribute("x", c.x);
-        textVal.setAttribute("y", c.y - 10); // Offset above line
+        textVal.setAttribute("y", c.y - 10);
         textVal.setAttribute("fill", c.active ? "#ffffff" : "rgba(255, 255, 255, 0.4)");
         textVal.setAttribute("font-size", "8");
         textVal.setAttribute("font-weight", c.active ? "bold" : "normal");
         textVal.setAttribute("text-anchor", "middle");
-        textVal.textContent = points[idx].uv.toFixed(1);
+        textVal.textContent = isTemp ? `${c.val.toFixed(0)}°` : c.val.toFixed(1);
         sparkline.appendChild(textVal);
       });
 
-      // 4. Render active/glowing circle at "Now" point
+      // 4. Render glowing active node dot
       const activeNode = coords.find(c => c.active);
       if (activeNode) {
-        // Outer glow circle
         const outerCircle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
         outerCircle.setAttribute("cx", activeNode.x);
         outerCircle.setAttribute("cy", activeNode.y);
@@ -592,7 +604,6 @@
         outerCircle.setAttribute("fill", "rgba(255, 255, 255, 0.2)");
         sparkline.appendChild(outerCircle);
 
-        // Core dot
         const innerCircle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
         innerCircle.setAttribute("cx", activeNode.x);
         innerCircle.setAttribute("cy", activeNode.y);
@@ -601,7 +612,7 @@
         sparkline.appendChild(innerCircle);
       }
 
-      // Render corresponding timeline text labels (00:00 style)
+      // Render bottom labels
       labels.forEach(l => {
         const span = document.createElement('span');
         span.className = `timeline-label ${l.active ? 'active' : ''}`;
