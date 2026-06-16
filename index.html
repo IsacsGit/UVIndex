@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <!-- Viewport optimized for iOS, preventing scaling and utilizing safe-area notch space -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
   
   <!-- iOS Web App Meta Tags -->
@@ -22,14 +21,14 @@
 
     body, html {
       width: 100%;
-      height: 100%;
+      height: 100dvh; /* Dynamic viewport height prevents PWA scaling bugs */
       background-color: #0b0b0b;
       color: #ffffff;
       font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Icons", "Helvetica Neue", Helvetica, Arial, sans-serif;
       overflow: hidden;
     }
 
-    /* Fixed position container resolves iOS standalone viewport height bugs */
+    /* Fixed position container binds directly to physical screen edges */
     .app-container {
       position: fixed;
       top: 0;
@@ -39,8 +38,7 @@
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      /* Padding binds directly to hardware safe area limits */
-      padding: calc(20px + env(safe-area-inset-top)) 24px calc(8px + env(safe-area-inset-bottom)) 24px;
+      padding: calc(15px + env(safe-area-inset-top)) 24px calc(12px + env(safe-area-inset-bottom)) 24px;
     }
 
     header {
@@ -49,11 +47,11 @@
     }
 
     header h1 {
-      font-size: 0.9rem;
+      font-size: 0.85rem;
       font-weight: 600;
       letter-spacing: 0.3em;
       text-transform: uppercase;
-      color: #8e8e93; /* Premium iOS gray */
+      color: #8e8e93;
     }
 
     /* Screen States */
@@ -62,25 +60,24 @@
       flex-direction: column;
       align-items: center;
       width: 100%;
-      height: 100%;
+      flex: 1; /* Safari Flexbox compliance */
+      min-height: 0;
     }
 
     .screen.active {
       display: flex;
     }
 
-    /* Keep landing and loading screens clustered in center */
     #permission-screen, #loading-screen {
       justify-content: center;
     }
 
-    /* Distribute dashboard elements cleanly to the absolute top and bottom */
     #dashboard-screen {
       justify-content: space-between;
-      padding-top: 20px;
+      padding-top: 15px;
     }
 
-    /* Permission/Splash Screen */
+    /* Welcome/Permission Screen styling */
     .permission-illustration {
       width: 80px;
       height: 80px;
@@ -103,7 +100,6 @@
       font-size: 1.4rem;
       font-weight: 400;
       margin-bottom: 12px;
-      letter-spacing: -0.02em;
     }
 
     .permission-text p {
@@ -112,7 +108,6 @@
       line-height: 1.5;
     }
 
-    /* Premium Neutral Button */
     .btn {
       background-color: #ffffff;
       color: #000000;
@@ -121,21 +116,12 @@
       border-radius: 30px;
       font-size: 1rem;
       font-weight: 600;
-      letter-spacing: -0.01em;
       box-shadow: 0 4px 12px rgba(255, 255, 255, 0.15);
       cursor: pointer;
-      transition: transform 0.2s ease, opacity 0.2s ease;
       width: 100%;
       max-width: 240px;
-      text-align: center;
     }
 
-    .btn:active {
-      transform: scale(0.97);
-      opacity: 0.9;
-    }
-
-    /* Loading Screen */
     .spinner {
       width: 32px;
       height: 32px;
@@ -156,17 +142,16 @@
       letter-spacing: 0.05em;
     }
 
-    /* Dashboard/Display Screen (Scaled down slightly for compact devices) */
+    /* Dashboard Gauge (Slightly more compact to allow room for the wavelength chart) */
     .gauge-container {
       position: relative;
-      width: 230px;
-      height: 230px;
+      width: 200px;
+      height: 200px;
       display: flex;
       align-items: center;
       justify-content: center;
     }
 
-    /* SVG Radial Progress Ring */
     .gauge-svg {
       transform: rotate(-90deg);
       width: 100%;
@@ -176,15 +161,15 @@
     .gauge-bg {
       fill: none;
       stroke: #1c1c1e;
-      stroke-width: 6;
+      stroke-width: 5;
     }
 
     .gauge-fill {
       fill: none;
       stroke: #ffffff;
-      stroke-width: 6;
+      stroke-width: 5;
       stroke-linecap: round;
-      stroke-dasharray: 628; /* Circumference for r=100 */
+      stroke-dasharray: 628; 
       stroke-dashoffset: 628;
       transition: stroke-dashoffset 1s cubic-bezier(0.25, 1, 0.5, 1);
     }
@@ -198,18 +183,68 @@
     }
 
     .uv-value {
-      font-size: 4.5rem;
+      font-size: 4.2rem;
       font-weight: 200;
       line-height: 1;
-      letter-spacing: -0.03em;
     }
 
     .uv-label {
-      font-size: 0.9rem;
+      font-size: 0.8rem;
       font-weight: 500;
       text-transform: uppercase;
       letter-spacing: 0.15em;
-      margin-top: 8px;
+      margin-top: 4px;
+    }
+
+    /* Premium Wavelength Timeline Chart Container */
+    .timeline-container {
+      width: 100%;
+      max-width: 340px;
+      background-color: #121214;
+      border: 1px solid #1c1c1e;
+      border-radius: 20px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .timeline-title {
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #8e8e93;
+    }
+
+    .timeline-chart-wrapper {
+      position: relative;
+      width: 100%;
+      height: 75px;
+    }
+
+    .timeline-svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    .timeline-labels {
+      display: flex;
+      justify-content: space-between;
+      width: 100%;
+      padding: 0 4px;
+    }
+
+    .timeline-label {
+      font-size: 0.65rem;
+      color: #8e8e93;
+      text-align: center;
+      width: calc(100% / 7);
+    }
+
+    .timeline-label.active {
+      color: #ffffff;
+      font-weight: 700;
     }
 
     /* Detail Cards Grid */
@@ -219,29 +254,27 @@
       gap: 12px;
       width: 100%;
       max-width: 340px;
-      margin-top: auto; /* Pushes cards cleanly down */
-      margin-bottom: 16px;
     }
 
     .card {
-      background-color: #1c1c1e;
-      border: 1px solid #2c2c2e;
-      padding: 16px;
+      background-color: #121214;
+      border: 1px solid #1c1c1e;
+      padding: 14px 16px;
       border-radius: 16px;
       display: flex;
       flex-direction: column;
     }
 
     .card-title {
-      font-size: 0.75rem;
+      font-size: 0.7rem;
       text-transform: uppercase;
       letter-spacing: 0.08em;
       color: #8e8e93;
-      margin-bottom: 6px;
+      margin-bottom: 4px;
     }
 
     .card-value {
-      font-size: 1.2rem;
+      font-size: 1.15rem;
       font-weight: 500;
     }
 
@@ -255,10 +288,10 @@
       background: none;
       border: none;
       color: #8e8e93;
-      font-size: 0.85rem;
+      font-size: 0.8rem;
       letter-spacing: 0.05em;
       text-transform: uppercase;
-      padding: 12px;
+      padding: 8px;
       cursor: pointer;
     }
   </style>
@@ -293,6 +326,8 @@
 
     <!-- 3. Primary Data Display Screen -->
     <main id="dashboard-screen" class="screen">
+      
+      <!-- Radial Gauge -->
       <div class="gauge-container">
         <svg class="gauge-svg" viewBox="0 0 220 220">
           <circle class="gauge-bg" cx="110" cy="110" r="100" />
@@ -301,6 +336,25 @@
         <div class="gauge-text">
           <div id="uv-num" class="uv-value">0</div>
           <div id="uv-text" class="uv-label">Loading</div>
+        </div>
+      </div>
+
+      <!-- Wavelength Trend Timeline Chart -->
+      <div class="timeline-container">
+        <span class="timeline-title">Wavelength (7-Hour Forecast)</span>
+        <div class="timeline-chart-wrapper">
+          <svg class="timeline-svg" id="sparkline" viewBox="0 0 300 75" preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="area-grad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#ffffff" stop-opacity="0.18" />
+                <stop offset="100%" stop-color="#ffffff" stop-opacity="0.0" />
+              </linearGradient>
+            </defs>
+            <!-- Render paths dynamically in JS -->
+          </svg>
+        </div>
+        <div class="timeline-labels" id="timeline-labels">
+          <!-- Render labels dynamically in JS -->
         </div>
       </div>
 
@@ -349,22 +403,21 @@
     }
 
     function onLocationError(error) {
-      // Clear persistence if scan fails so user can retry manually
       localStorage.removeItem('uv_location_allowed');
-      alert("Unable to retrieve location. Please ensure Safari is authorized to access location in system settings.");
+      alert("Unable to retrieve location. Please check your location settings in your device settings.");
       showScreen('permission-screen');
     }
 
     // Location successfully acquired
     async function onLocationSuccess(position) {
-      // Set the persistent authorization flag in localStorage
       localStorage.setItem('uv_location_allowed', 'true');
       
       const lat = position.coords.latitude;
       const lon = position.coords.longitude;
       
       try {
-        const response = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=uv_index&daily=uv_index_max&timezone=auto&forecast_days=1`);
+        // Query API including past_days=1 to guarantee we can look backwards in time smoothly
+        const response = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=uv_index&daily=uv_index_max&timezone=auto&past_days=1&forecast_days=2`);
         
         if (!response.ok) throw new Error("API response error");
         
@@ -391,12 +444,15 @@
     function renderUVData(data) {
       const hourlyTimes = data.hourly.time;
       const hourlyUV = data.hourly.uv_index;
-      const dailyPeak = data.daily.uv_index_max[0];
+      
+      // Get local daily max (today is index 1 because index 0 is yesterday due to past_days=1)
+      const dailyPeak = data.daily.uv_index_max[1]; 
       
       const currentFormattedTime = getFormattedLocalHour();
       const timeIndex = hourlyTimes.indexOf(currentFormattedTime);
       
-      const currentUV = timeIndex !== -1 ? hourlyUV[timeIndex] : hourlyUV[12];
+      // Get current UV
+      const currentUV = timeIndex !== -1 ? hourlyUV[timeIndex] : 0;
 
       document.getElementById('uv-num').innerText = currentUV.toFixed(1);
       document.getElementById('uv-peak').innerText = `${dailyPeak.toFixed(1)} Max`;
@@ -421,16 +477,123 @@
       document.getElementById('uv-text').innerText = category;
       document.getElementById('uv-advice').innerText = advice;
 
+      // Update progress ring
       const progressRing = document.getElementById('progress-ring');
       const circumference = 628; 
-      
       const maxScaleVal = 12;
       const scalePercent = Math.min(currentUV / maxScaleVal, 1);
       const offset = circumference - (scalePercent * circumference);
       
       progressRing.style.strokeDashoffset = offset;
 
+      // Build Wavelength Timeline Sparkline
+      renderWavelengthChart(hourlyTimes, hourlyUV, timeIndex);
+
       showScreen('dashboard-screen');
+    }
+
+    // Render smooth SVG Hermite Bezier wave for timeline
+    function renderWavelengthChart(times, uvIndices, currentIndex) {
+      const sparkline = document.getElementById('sparkline');
+      const labelContainer = document.getElementById('timeline-labels');
+      
+      // Clear previous paths/labels
+      sparkline.querySelectorAll('path, circle').forEach(el => el.remove());
+      labelContainer.innerHTML = '';
+
+      const chartWidth = 300;
+      const chartHeight = 75;
+      const padY = 15;
+      const usableHeight = chartHeight - padY * 2;
+
+      const points = [];
+      const labels = [];
+
+      // Extract 7-hour subset (-3 hours to +3 hours)
+      for (let i = -3; i <= 3; i++) {
+        const targetIndex = currentIndex + i;
+        if (targetIndex >= 0 && targetIndex < times.length) {
+          const uv = uvIndices[targetIndex];
+          const timeStr = times[targetIndex];
+          const hour = parseInt(timeStr.split('T')[1].split(':')[0]);
+          const ampm = hour >= 12 ? 'p' : 'a';
+          const displayHour = hour % 12 === 0 ? 12 : hour % 12;
+          
+          points.push({ uv, active: i === 0 });
+          labels.push({ text: i === 0 ? "Now" : `${displayHour}${ampm}`, active: i === 0 });
+        }
+      }
+
+      // Map mathematical values to raw SVG coordinates
+      const coords = points.map((p, idx) => {
+        const x = (idx / (points.length - 1)) * chartWidth;
+        // Map UV 0-12 scale linearly to vertical space
+        const y = chartHeight - padY - (Math.min(p.uv, 12) / 12) * usableHeight;
+        return { x, y, active: p.active };
+      });
+
+      // Build smooth cubic Hermite Bezier interpolation path
+      let linePath = `M ${coords[0].x} ${coords[0].y} `;
+      let areaPath = `M ${coords[0].x} ${chartHeight} L ${coords[0].x} ${coords[0].y} `;
+
+      for (let i = 0; i < coords.length - 1; i++) {
+        const p0 = coords[i];
+        const p1 = coords[i + 1];
+        
+        // Control points smooth horizontal tension
+        const cpX1 = p0.x + (p1.x - p0.x) / 2;
+        const cpY1 = p0.y;
+        const cpX2 = p0.x + (p1.x - p0.x) / 2;
+        const cpY2 = p1.y;
+
+        const curveSegment = `C ${cpX1} ${cpY1}, ${cpX2} ${cpY2}, ${p1.x} ${p1.y} `;
+        linePath += curveSegment;
+        areaPath += curveSegment;
+      }
+
+      areaPath += `L ${chartWidth} ${chartHeight} Z`;
+
+      // 1. Create filled area path
+      const areaEl = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      areaEl.setAttribute("d", areaPath);
+      areaEl.setAttribute("fill", "url(#area-grad)");
+      sparkline.appendChild(areaEl);
+
+      // 2. Create stroke line path
+      const lineEl = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      lineEl.setAttribute("d", linePath);
+      lineEl.setAttribute("stroke", "rgba(255, 255, 255, 0.45)");
+      lineEl.setAttribute("stroke-width", "1.5");
+      lineEl.setAttribute("fill", "none");
+      sparkline.appendChild(lineEl);
+
+      // 3. Render active/glowing circle at "Now" point
+      const activeNode = coords.find(c => c.active);
+      if (activeNode) {
+        // Outer glow circle
+        const outerCircle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        outerCircle.setAttribute("cx", activeNode.x);
+        outerCircle.setAttribute("cy", activeNode.y);
+        outerCircle.setAttribute("r", "8");
+        outerCircle.setAttribute("fill", "rgba(255, 255, 255, 0.2)");
+        sparkline.appendChild(outerCircle);
+
+        // Core dot
+        const innerCircle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        innerCircle.setAttribute("cx", activeNode.x);
+        innerCircle.setAttribute("cy", activeNode.y);
+        innerCircle.setAttribute("r", "3");
+        innerCircle.setAttribute("fill", "#ffffff");
+        sparkline.appendChild(innerCircle);
+      }
+
+      // Render corresponding timeline text labels
+      labels.forEach(l => {
+        const span = document.createElement('span');
+        span.className = `timeline-label ${l.active ? 'active' : ''}`;
+        span.innerText = l.text;
+        labelContainer.appendChild(span);
+      });
     }
 
     // Check for previous authorization flags on startup
