@@ -19,6 +19,7 @@
       -webkit-tap-highlight-color: transparent;
     }
 
+    /* dynamic viewport height (100dvh) prevents iOS Home Screen scaling issues */
     html, body {
       width: 100%;
       height: 100vh;
@@ -35,8 +36,8 @@
       height: 100dvh;
       display: flex;
       flex-direction: column;
-      /* Removed space-between here so we can manually control the gap */
-      padding: calc(10px + env(safe-area-inset-top)) 24px env(safe-area-inset-bottom) 24px;
+      justify-content: space-between;
+      padding: calc(10px + env(safe-area-inset-top)) 24px calc(10px + env(safe-area-inset-bottom)) 24px;
     }
 
     header {
@@ -58,7 +59,7 @@
       flex-direction: column;
       align-items: center;
       width: 100%;
-      flex: 1; 
+      flex: 1; /* iOS Safari flexbox alignment compliance */
       min-height: 0;
     }
 
@@ -71,9 +72,8 @@
     }
 
     #dashboard-screen {
-      /* Start from the top, let margin-top: auto handle the bottom push */
-      justify-content: flex-start; 
-      padding-top: 2vh;
+      justify-content: space-between;
+      padding-top: 10px;
       height: 100%;
     }
 
@@ -142,14 +142,15 @@
       letter-spacing: 0.05em;
     }
 
-    /* Dashboard Gauge */
+    /* Dashboard Gauge - Scaled up significantly */
     .gauge-container {
       position: relative;
-      width: 170px;
-      height: 170px;
+      width: 250px; /* Increased from 170px */
+      height: 250px; /* Increased from 170px */
       display: flex;
       align-items: center;
       justify-content: center;
+      margin: 0 auto;
     }
 
     .gauge-svg {
@@ -183,17 +184,17 @@
     }
 
     .uv-value {
-      font-size: 3.5rem;
+      font-size: 5rem; /* Increased from 3.5rem */
       font-weight: 200;
       line-height: 1;
     }
 
     .uv-label {
-      font-size: 0.75rem;
+      font-size: 0.85rem;
       font-weight: 500;
       text-transform: uppercase;
       letter-spacing: 0.15em;
-      margin-top: 4px;
+      margin-top: 6px;
     }
 
     /* NEW WRAPPER: Pushes all these elements to the absolute bottom */
@@ -202,9 +203,9 @@
       flex-direction: column;
       align-items: center;
       width: 100%;
-      gap: 12px; /* Uniform tight spacing between the bottom elements */
-      margin-top: auto; /* <--- THIS IS THE MAGIC THAT PUSHES IT DOWN */
-      padding-bottom: 8px; /* Tiny cushion above the home bar */
+      gap: 12px; 
+      margin-top: auto; 
+      padding-bottom: 8px; 
     }
 
     /* Premium Wavelength Timeline Chart Container */
@@ -221,11 +222,13 @@
     }
 
     .timeline-title {
-      font-size: 0.65rem;
+      font-size: 0.7rem;
       font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 0.1em;
       color: #8e8e93;
+      text-align: center; /* Centered as requested */
+      width: 100%;
     }
 
     .timeline-chart-wrapper {
@@ -319,7 +322,7 @@
     <!-- 3. Primary Data Display Screen -->
     <main id="dashboard-screen" class="screen">
       
-      <!-- Radial Gauge (Stays at Top) -->
+      <!-- Radial Gauge -->
       <div class="gauge-container">
         <svg class="gauge-svg" viewBox="0 0 220 220">
           <circle class="gauge-bg" cx="110" cy="110" r="100" />
@@ -336,7 +339,7 @@
         
         <!-- UV Timeline Chart -->
         <div class="timeline-container">
-          <span class="timeline-title">UV Index (7-Hour Forecast)</span>
+          <span class="timeline-title">UV Index</span>
           <div class="timeline-chart-wrapper">
             <svg class="timeline-svg" id="uv-sparkline" viewBox="0 0 300 80" preserveAspectRatio="none">
               <defs>
@@ -351,7 +354,7 @@
 
         <!-- Temperature Timeline Chart -->
         <div class="timeline-container">
-          <span class="timeline-title">Temperature (7-Hour Forecast)</span>
+          <span class="timeline-title">Temperature</span>
           <div class="timeline-chart-wrapper">
             <svg class="timeline-svg" id="temp-sparkline" viewBox="0 0 300 80" preserveAspectRatio="none"></svg>
           </div>
