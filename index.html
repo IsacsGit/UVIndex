@@ -19,7 +19,6 @@
       -webkit-tap-highlight-color: transparent;
     }
 
-    /* dynamic viewport height (100dvh) prevents iOS Home Screen scaling issues */
     html, body {
       width: 100%;
       height: 100vh;
@@ -36,8 +35,8 @@
       height: 100dvh;
       display: flex;
       flex-direction: column;
-      justify-content: space-between;
-      padding: calc(10px + env(safe-area-inset-top)) 24px calc(10px + env(safe-area-inset-bottom)) 24px;
+      /* Removed space-between here so we can manually control the gap */
+      padding: calc(10px + env(safe-area-inset-top)) 24px env(safe-area-inset-bottom) 24px;
     }
 
     header {
@@ -59,7 +58,7 @@
       flex-direction: column;
       align-items: center;
       width: 100%;
-      flex: 1; /* iOS Safari flexbox alignment compliance */
+      flex: 1; 
       min-height: 0;
     }
 
@@ -72,8 +71,9 @@
     }
 
     #dashboard-screen {
-      justify-content: space-between;
-      padding-top: 10px;
+      /* Start from the top, let margin-top: auto handle the bottom push */
+      justify-content: flex-start; 
+      padding-top: 2vh;
       height: 100%;
     }
 
@@ -196,6 +196,17 @@
       margin-top: 4px;
     }
 
+    /* NEW WRAPPER: Pushes all these elements to the absolute bottom */
+    .bottom-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+      gap: 12px; /* Uniform tight spacing between the bottom elements */
+      margin-top: auto; /* <--- THIS IS THE MAGIC THAT PUSHES IT DOWN */
+      padding-bottom: 8px; /* Tiny cushion above the home bar */
+    }
+
     /* Premium Wavelength Timeline Chart Container */
     .timeline-container {
       width: 100%;
@@ -308,7 +319,7 @@
     <!-- 3. Primary Data Display Screen -->
     <main id="dashboard-screen" class="screen">
       
-      <!-- Radial Gauge -->
+      <!-- Radial Gauge (Stays at Top) -->
       <div class="gauge-container">
         <svg class="gauge-svg" viewBox="0 0 220 220">
           <circle class="gauge-bg" cx="110" cy="110" r="100" />
@@ -320,43 +331,48 @@
         </div>
       </div>
 
-      <!-- UV Timeline Chart -->
-      <div class="timeline-container">
-        <span class="timeline-title">UV Index (7-Hour Forecast)</span>
-        <div class="timeline-chart-wrapper">
-          <svg class="timeline-svg" id="uv-sparkline" viewBox="0 0 300 80" preserveAspectRatio="none">
-            <defs>
-              <linearGradient id="area-grad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stop-color="#ffffff" stop-opacity="0.18" />
-                <stop offset="100%" stop-color="#ffffff" stop-opacity="0.0" />
-              </linearGradient>
-            </defs>
-          </svg>
+      <!-- Bottom Content Group (Pushed tightly to the bottom) -->
+      <div class="bottom-content">
+        
+        <!-- UV Timeline Chart -->
+        <div class="timeline-container">
+          <span class="timeline-title">UV Index (7-Hour Forecast)</span>
+          <div class="timeline-chart-wrapper">
+            <svg class="timeline-svg" id="uv-sparkline" viewBox="0 0 300 80" preserveAspectRatio="none">
+              <defs>
+                <linearGradient id="area-grad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#ffffff" stop-opacity="0.18" />
+                  <stop offset="100%" stop-color="#ffffff" stop-opacity="0.0" />
+                </linearGradient>
+              </defs>
+            </svg>
+          </div>
         </div>
-      </div>
 
-      <!-- Temperature Timeline Chart -->
-      <div class="timeline-container">
-        <span class="timeline-title">Temperature (7-Hour Forecast)</span>
-        <div class="timeline-chart-wrapper">
-          <svg class="timeline-svg" id="temp-sparkline" viewBox="0 0 300 80" preserveAspectRatio="none"></svg>
+        <!-- Temperature Timeline Chart -->
+        <div class="timeline-container">
+          <span class="timeline-title">Temperature (7-Hour Forecast)</span>
+          <div class="timeline-chart-wrapper">
+            <svg class="timeline-svg" id="temp-sparkline" viewBox="0 0 300 80" preserveAspectRatio="none"></svg>
+          </div>
         </div>
-      </div>
 
-      <!-- Contextual detail cards -->
-      <div class="details-grid">
-        <div class="card">
-          <span class="card-title">Daily Peak</span>
-          <span id="uv-peak" class="card-value">-</span>
+        <!-- Contextual detail cards -->
+        <div class="details-grid">
+          <div class="card">
+            <span class="card-title">Daily Peak</span>
+            <span id="uv-peak" class="card-value">-</span>
+          </div>
+          <div class="card">
+            <span class="card-title">Protection</span>
+            <span id="uv-advice" class="card-value">-</span>
+          </div>
         </div>
-        <div class="card">
-          <span class="card-title">Protection</span>
-          <span id="uv-advice" class="card-value">-</span>
-        </div>
-      </div>
 
-      <div class="footer-actions">
-        <button class="btn-secondary" onclick="requestLocation()">Recalibrate</button>
+        <div class="footer-actions">
+          <button class="btn-secondary" onclick="requestLocation()">Recalibrate</button>
+        </div>
+
       </div>
     </main>
   </div>
@@ -412,7 +428,7 @@
         
         globalWeatherData = await response.json();
         
-        // Execute initial render, then engage a 10-second tick to smoothly interpolate fractional times
+        // Execute initial render, then engage a 10-second tick
         calculateAndRender();
         updateTimer = setInterval(calculateAndRender, 10000);
         
@@ -514,7 +530,6 @@
     function renderSparkline(svgId, times, values, currentIndex, isTemp = false) {
       const sparkline = document.getElementById(svgId);
       
-      // Clear previous paths, circles and text elements
       sparkline.querySelectorAll('path, circle, text').forEach(el => el.remove());
 
       const chartWidth = 300;
@@ -525,7 +540,6 @@
 
       const points = [];
 
-      // Extract an 8-hour window (-3 hours to +4 hours) to allow seamless scrolling padding on the right edge
       for (let i = -3; i <= 4; i++) {
         const targetIndex = currentIndex + i;
         if (targetIndex >= 0 && targetIndex < times.length) {
@@ -537,7 +551,6 @@
         }
       }
 
-      // Dynamic Y-scaling for temperature ranges
       let minVal = 0;
       let maxVal = 12; 
       
@@ -548,22 +561,18 @@
       }
 
       const range = maxVal - minVal || 1;
-
-      // Generate precise coordinates shifted dynamically based on the current hour progress fraction (t)
-      const stepX = 50; // Distance between hourly nodes
-      const centerX = 150; // Absolute horizontal center of the chart
+      const stepX = 50; 
+      const centerX = 150; 
       
       const now = new Date();
       const t = (now.getMinutes() * 60 + now.getSeconds()) / 3600;
 
       const coords = points.map((p) => {
-        // Shift every node to the left smoothly based on current minutes (t)
         const x = centerX + p.offset * stepX - t * stepX;
         const y = chartHeight - padYBottom - ((p.val - minVal) / range) * usableHeight;
         return { x, y, active: p.offset === 0, val: p.val, label: p.label, offset: p.offset };
       });
 
-      // Build smooth Hermite Spline path
       let linePath = `M ${coords[0].x} ${coords[0].y} `;
       let areaPath = `M ${coords[0].x} ${chartHeight - padYBottom} L ${coords[0].x} ${coords[0].y} `;
 
@@ -581,10 +590,8 @@
         areaPath += curveSegment;
       }
 
-      // Close the area path perfectly beyond the visible boundaries
       areaPath += `L ${coords[coords.length - 1].x} ${chartHeight - padYBottom} Z`;
 
-      // 1. Render gradient area fill (only for UV index)
       if (!isTemp) {
         const areaEl = document.createElementNS("http://www.w3.org/2000/svg", "path");
         areaEl.setAttribute("d", areaPath);
@@ -592,7 +599,6 @@
         sparkline.appendChild(areaEl);
       }
 
-      // 2. Render stroke line
       const lineEl = document.createElementNS("http://www.w3.org/2000/svg", "path");
       lineEl.setAttribute("d", linePath);
       lineEl.setAttribute("stroke", "rgba(255, 255, 255, 0.45)");
@@ -600,13 +606,10 @@
       lineEl.setAttribute("fill", "none");
       sparkline.appendChild(lineEl);
 
-      // 3. Render raw numbers above each node + timeline text below
       coords.forEach((c) => {
-        // Soft edge-fading shader calculations
         const distFromCenter = Math.abs(centerX - c.x);
         const opacity = Math.max(0.0, 1 - distFromCenter / 150);
 
-        // Value Text
         const textVal = document.createElementNS("http://www.w3.org/2000/svg", "text");
         textVal.setAttribute("x", c.x);
         textVal.setAttribute("y", c.y - 10);
@@ -617,7 +620,6 @@
         textVal.textContent = isTemp ? `${c.val.toFixed(0)}°` : c.val.toFixed(1);
         sparkline.appendChild(textVal);
 
-        // Time Text
         const textTime = document.createElementNS("http://www.w3.org/2000/svg", "text");
         textTime.setAttribute("x", c.x);
         textTime.setAttribute("y", chartHeight - 4); 
@@ -629,16 +631,12 @@
         sparkline.appendChild(textTime);
       });
 
-      // 4. Calculate exact Bezier curve height for the stationary, centered dot
-      // The current time is always passing through centerX (150).
-      // This corresponds to progress t along the bezier segment between coords[3] (index 3) and coords[4] (index 4).
       const p0 = coords[3]; 
       const p1 = coords[4];
       
-      const cpY1 = p0.y; // Bezier control points match flat tangency
+      const cpY1 = p0.y; 
       const cpY2 = p1.y;
 
-      // Cubic Bezier mathematical formula:
       const dotX = centerX;
       const mt = 1 - t;
       const dotY = (mt * mt * mt * p0.y) + 
@@ -646,7 +644,6 @@
                    (3 * mt * t * t * cpY2) + 
                    (t * t * t * p1.y);
 
-      // 5. Render traveling dot strictly in the horizontal center riding the vertical wave curve
       const outerCircle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
       outerCircle.setAttribute("cx", dotX);
       outerCircle.setAttribute("cy", dotY);
@@ -662,7 +659,6 @@
       sparkline.appendChild(innerCircle);
     }
 
-    // Check for previous authorization flags on startup
     window.addEventListener('DOMContentLoaded', () => {
       if (localStorage.getItem('uv_location_allowed') === 'true') {
         requestLocation();
