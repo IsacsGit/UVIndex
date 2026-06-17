@@ -220,7 +220,7 @@
     .timeline-chart-wrapper {
       position: relative;
       width: 100%;
-      height: 80px; /* Highly optimized card heights */
+      height: 80px; 
     }
 
     .timeline-svg {
@@ -503,45 +503,43 @@
       const offset = circumference - (scalePercent * circumference);
       progressRing.style.strokeDashoffset = offset;
 
-      // Render mathematical sparklines (Now containing crawling timeline dot)
+      // Render scrolling sparklines with a stationary center dot
       renderSparkline('uv-sparkline', hourlyTimes, hourlyUV, currentIndex, false);
       renderSparkline('temp-sparkline', hourlyTimes, hourlyTemp, currentIndex, true);
 
       showScreen('dashboard-screen');
     }
 
-    // Generic SVG Sparkline renderer - Calculates stable nodes, but lets the glowing dot crawl between hour blocks
+    // Mathematical scrolling Hermite Bezier wave
     function renderSparkline(svgId, times, values, currentIndex, isTemp = false) {
       const sparkline = document.getElementById(svgId);
       
-      // Clear previous paths, circles and text
+      // Clear previous paths, circles and text elements
       sparkline.querySelectorAll('path, circle, text').forEach(el => el.remove());
 
       const chartWidth = 300;
       const chartHeight = 80;
-      const padYTop = 22;    // Space at top of graph to prevent clipping numbers
-      const padYBottom = 16; // Space at bottom of graph to prevent clipping time labels
+      const padYTop = 22;    
+      const padYBottom = 16; 
       const usableHeight = chartHeight - padYTop - padYBottom;
 
       const points = [];
-      const labels = [];
 
-      // Extract 7-hour stable subset centered strictly on hourly blocks (-3 hours to +3 hours)
-      for (let i = -3; i <= 3; i++) {
+      // Extract an 8-hour window (-3 hours to +4 hours) to allow seamless scrolling padding on the right edge
+      for (let i = -3; i <= 4; i++) {
         const targetIndex = currentIndex + i;
         if (targetIndex >= 0 && targetIndex < times.length) {
           const val = values[targetIndex];
           const timeStr = times[targetIndex];
           const hourFormatted = timeStr.split('T')[1].substring(0, 5); 
           
-          points.push({ val, label: hourFormatted, active: i === 0 });
-          labels.push({ text: hourFormatted, active: i === 0 });
+          points.push({ val, label: hourFormatted, offset: i });
         }
       }
 
       // Dynamic Y-scaling for temperature ranges
       let minVal = 0;
-      let maxVal = 12; // Static maximum for standard UV scale
+      let maxVal = 12; 
       
       if (isTemp) {
         const numericValues = points.map(p => p.val);
@@ -551,18 +549,23 @@
 
       const range = maxVal - minVal || 1;
 
-      // Map values to stable hourly coordinates
-      const coords = points.map((p, idx) => {
-        const x = (idx / (points.length - 1)) * chartWidth;
+      // Generate precise coordinates shifted dynamically based on the current hour progress fraction (t)
+      const stepX = 50; // Distance between hourly nodes
+      const centerX = 150; // Absolute horizontal center of the chart
+      
+      const now = new Date();
+      const t = (now.getMinutes() * 60 + now.getSeconds()) / 3600;
+
+      const coords = points.map((p) => {
+        // Shift every node to the left smoothly based on current minutes (t)
+        const x = centerX + p.offset * stepX - t * stepX;
         const y = chartHeight - padYBottom - ((p.val - minVal) / range) * usableHeight;
-        return { x, y, active: p.active, val: p.val, label: p.label };
+        return { x, y, active: p.offset === 0, val: p.val, label: p.label, offset: p.offset };
       });
 
       // Build smooth Hermite Spline path
       let linePath = `M ${coords[0].x} ${coords[0].y} `;
       let areaPath = `M ${coords[0].x} ${chartHeight - padYBottom} L ${coords[0].x} ${coords[0].y} `;
-
-      const controlPoints = [];
 
       for (let i = 0; i < coords.length - 1; i++) {
         const p0 = coords[i];
@@ -573,17 +576,15 @@
         const cpX2 = p0.x + (p1.x - p0.x) / 2;
         const cpY2 = p1.y;
 
-        // Store control points specifically for path tracing
-        controlPoints.push({ cpY1, cpY2 });
-
         const curveSegment = `C ${cpX1} ${cpY1}, ${cpX2} ${cpY2}, ${p1.x} ${p1.y} `;
         linePath += curveSegment;
         areaPath += curveSegment;
       }
 
-      areaPath += `L ${chartWidth} ${chartHeight - padYBottom} Z`;
+      // Close the area path perfectly beyond the visible boundaries
+      areaPath += `L ${coords[coords.length - 1].x} ${chartHeight - padYBottom} Z`;
 
-      // 1. Render gradient area fill (only for UV index using the defined linear gradient)
+      // 1. Render gradient area fill (only for UV index)
       if (!isTemp) {
         const areaEl = document.createElementNS("http://www.w3.org/2000/svg", "path");
         areaEl.setAttribute("d", areaPath);
@@ -599,51 +600,53 @@
       lineEl.setAttribute("fill", "none");
       sparkline.appendChild(lineEl);
 
-      // 3. Render raw numbers above each node + stable time labels below
+      // 3. Render raw numbers above each node + timeline text below
       coords.forEach((c) => {
+        // Soft edge-fading shader calculations
+        const distFromCenter = Math.abs(centerX - c.x);
+        const opacity = Math.max(0.0, 1 - distFromCenter / 150);
+
         // Value Text
         const textVal = document.createElementNS("http://www.w3.org/2000/svg", "text");
         textVal.setAttribute("x", c.x);
         textVal.setAttribute("y", c.y - 10);
-        textVal.setAttribute("fill", c.active ? "#ffffff" : "rgba(255, 255, 255, 0.4)");
+        textVal.setAttribute("fill", `rgba(255, 255, 255, ${opacity * 0.8})`);
         textVal.setAttribute("font-size", "8");
-        textVal.setAttribute("font-weight", c.active ? "bold" : "normal");
+        textVal.setAttribute("font-weight", c.offset === 0 ? "bold" : "normal");
         textVal.setAttribute("text-anchor", "middle");
         textVal.textContent = isTemp ? `${c.val.toFixed(0)}°` : c.val.toFixed(1);
         sparkline.appendChild(textVal);
 
-        // Time Text (guarantees pixel perfect mathematical alignment under nodes)
+        // Time Text
         const textTime = document.createElementNS("http://www.w3.org/2000/svg", "text");
         textTime.setAttribute("x", c.x);
         textTime.setAttribute("y", chartHeight - 4); 
-        textTime.setAttribute("fill", c.active ? "#ffffff" : "rgba(255, 255, 255, 0.4)");
+        textTime.setAttribute("fill", `rgba(255, 255, 255, ${opacity * 0.5})`);
         textTime.setAttribute("font-size", "7");
-        textTime.setAttribute("font-weight", c.active ? "bold" : "normal");
+        textTime.setAttribute("font-weight", c.offset === 0 ? "bold" : "normal");
         textTime.setAttribute("text-anchor", "middle");
         textTime.textContent = c.label;
         sparkline.appendChild(textTime);
       });
 
-      // 4. Calculate Bezier path coordinate for traveling dot (t is fraction between current and next hour)
-      const pNow = coords[3]; // Center index (0-based: index 3 is 'Now')
-      const pNext = coords[4]; // Next index
+      // 4. Calculate exact Bezier curve height for the stationary, centered dot
+      // The current time is always passing through centerX (150).
+      // This corresponds to progress t along the bezier segment between coords[3] (index 3) and coords[4] (index 4).
+      const p0 = coords[3]; 
+      const p1 = coords[4];
       
-      const now = new Date();
-      const t = (now.getMinutes() * 60 + now.getSeconds()) / 3600;
+      const cpY1 = p0.y; // Bezier control points match flat tangency
+      const cpY2 = p1.y;
 
-      // Extract Bezier control points for the current segment
-      const cpY1 = controlPoints[3].cpY1;
-      const cpY2 = controlPoints[3].cpY2;
-
-      // Cubic Bezier path mathematical curve formula:
-      const dotX = pNow.x + (pNext.x - pNow.x) * t;
+      // Cubic Bezier mathematical formula:
+      const dotX = centerX;
       const mt = 1 - t;
-      const dotY = (mt * mt * mt * pNow.y) + 
+      const dotY = (mt * mt * mt * p0.y) + 
                    (3 * mt * mt * t * cpY1) + 
                    (3 * mt * t * t * cpY2) + 
-                   (t * t * t * pNext.y);
+                   (t * t * t * p1.y);
 
-      // 5. Render traveling dot on calculated coordinates
+      // 5. Render traveling dot strictly in the horizontal center riding the vertical wave curve
       const outerCircle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
       outerCircle.setAttribute("cx", dotX);
       outerCircle.setAttribute("cy", dotY);
